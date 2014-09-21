@@ -10,7 +10,7 @@ echo ""
 NPS_VER=1.9.32.1
 
 # Variables for OpenResty
-OPENRESTY_UGID=nobody
+OPENRESTY_UGID=nginx
 OPENRESTY_PREFIX=/etc/openresty
 OPENRESTY_SBIN_PATH=/usr/sbin/nginx
 OPENRESTY_LOCK_PATH=/tmp/openresty.lock
@@ -22,6 +22,9 @@ function install_packages {
 	if [ `cat /etc/issue | awk '{printf $1}'` == "Debian" ]; then
 		apt-get update && apt-get install -y git curl build-essential libreadline6-dev \
 		ncurses-dev libpcre++-dev libssl-dev libgeoip-dev libxml2-dev libxslt-dev libgd2-xpm-dev libperl-dev zlib1g-dev libpcre3 libpcre3-dev
+
+		groupadd -g 81 nginx && useradd -d /var/www -c "Nginx User" -u 81 -g 81 -s /sbin/nologin nginx
+
 		sleep 5
 		echo -ne "\033[33m - Step 1. The requirements of packages for OpenResty: [\033[0m"
 		echo -ne "\033[32m Complete\033[0m"
@@ -31,6 +34,9 @@ function install_packages {
 	elif [ `cat /etc/issue | awk '{printf $1}'` == "Ubuntu" ]; then
 		apt-get update && apt-get install -y git curl build-essential libreadline6-dev \
 		ncurses-dev libpcre++-dev libssl-dev libgeoip-dev libxml2-dev libxslt-dev libgd2-xpm-dev libperl-dev zlib1g-dev libpcre3 libpcre3-dev
+
+		groupadd -g 81 nginx && useradd -d /var/www -c "Nginx User" -u 81 -g 81 -s /sbin/nologin nginx
+
 		sleep 5
 		echo -ne "\033[33m - Step 1. The requirements of packages for OpenResty: [\033[0m"
 		echo -ne "\033[32m Complete\033[0m"
@@ -56,6 +62,8 @@ function install_packages {
 			yum install --enablerepo=rpmforge -y git geoip-devel
 		fi
 
+		groupadd -g 81 nginx && useradd -d /var/www -c "Nginx User" -u 81 -g 81 -s /sbin/nologin nginx
+
 		sleep 5
 		echo -ne "\033[33m - Step 1. The requirements of packages for OpenResty: [\033[0m"
 		echo -ne "\033[32m Complete\033[0m"
@@ -66,6 +74,9 @@ function install_packages {
 		yum groupinstall -y "Development Tools"
 		yum install -y git curl readline-devel pcre-devel openssl-devel \
 		geoip-devel ncurses-devel openssl-devel libxml2-devel libxslt-devel gd-devel zlib-devel perl-devel perl-ExtUtils-Embed
+
+		groupadd -g 81 nginx && useradd -d /var/www -c "Nginx User" -u 81 -g 81 -s /sbin/nologin nginx
+
 		sleep 5
 		echo -ne "\033[33m - Step 1. The requirements of packages for OpenResty: [\033[0m"
 		echo -ne "\033[32m Complete\033[0m"
@@ -123,8 +134,12 @@ function build_openresty {
 	--http-client-body-temp-path=$OPENRESTY_PREFIX/tmp/client_body_temp \
 	--http-proxy-temp-path=$OPENRESTY_PREFIX/tmp/proxy_temp \
 	--http-fastcgi-temp-path=$OPENRESTY_PREFIX/tmp/fastcgi_temp
-	make && make install && mkdir -p $OPENRESTY_PREFIX/tmp/{client_body_temp,proxy_temp,fastcgi_temp} && cd .. && rm -rf ngx*
- 	sleep 5
+	make && make install && mkdir -p $OPENRESTY_PREFIX/tmp/{client_body_temp,proxy_temp,fastcgi_temp}
+	cp conf/nginx.conf $OPENRESTY_PREFIX/nginx
+	cp -r conf/vhosts $OPENRESTY_PREFIX/nginx
+	cp -r conf/html $OPENRESTY_PREFIX/nginx
+
+	sleep 5
 	echo -ne "\033[33m - Step 3. Build for OpenResty: [\033[0m"
 	echo -ne "\033[32m Complete\033[0m"
 	echo -ne "\033[33m ]\033[0m \n"
